@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTKX Movies</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #E1F5FE;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        h1 {
+            margin-top: 20px;
+            font-size: 2.5em;
+            color: #00B0FF;
+            text-shadow: 2px 2px 4px #000;
+        }
+        .movie-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+        }
+        .movie {
+            background: #263238;
+            border-radius: 12px;
+            padding: 20px;
+            width: 250px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .movie:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.7);
+        }
+        .movie h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #00E676;
+        }
+        .movie button {
+            background-color: #00E676;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+        .movie button:hover {
+            background-color: #00B0FF;
+        }
+        .search-bar {
+            margin: 20px;
+        }
+        .search-bar input {
+            padding: 10px;
+            width: 300px;
+            border-radius: 5px;
+            border: 1px solid #00B0FF;
+            font-size: 1em;
+            outline: none;
+        }
+        .filter-buttons {
+            margin: 10px;
+        }
+        .filter-buttons button {
+            background-color: #00B0FF;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.9em;
+        }
+        .filter-buttons button:hover {
+            background-color: #00E676;
+        }
+        #loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #loading .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #fff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+    </div>
+    <h1>RTKX Movies</h1>
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="Search for movies...">
+    </div>
+    <div class="filter-buttons">
+        <button onclick="filterMovies('exclusive')">In Site Exclusive</button>
+    </div>
+    <div class="movie-container">
+        <!-- Movies will be dynamically inserted here -->
+    </div>
+
+    <script>
+        const movies = [
+            // OG Movies
+            { title: "Diary of a Wimpy Kid", exclusive: false, watchLink: "https://drive.google.com/file/d/0B7_czhdxwtsFLUNRSkJkNi1uZXc/view?resourcekey=0-Gx8WFZ1cU_O6cEYj7fy3PA" },
+            { title: "Emoji Movie", exclusive: false, watchLink: "https://drive.google.com/file/d/0B3mvUq8g3_1qV2stVmJnUnM1WUU/view?resourcekey=0-SOkxizIEi1gjd1T3QzowR" },
+            { title: "Shrek 3", exclusive: false, watchLink: "https://drive.google.com/file/d/0BxjpFwq64s6GbC14SmZCVG00MUE/view?resourcekey=0-RQ1axdMvxhIkRW-iPEhZLw" },
+            { title: "Pirates of the Caribbean", exclusive: false, watchLink: "https://drive.google.com/file/d/0BxzNManoO9tBdENqRXpxNFNsQjg/view?resourcekey=0-FTLcPrnf9jumiAu0zjp9zw" },
+            { title: "Wreck-It Ralph", exclusive: true, watchLink: "https://drive.google.com/file/d/0Bw2qWaOFI6AITzRrS0M3NUl4MHM/view?resourcekey=0-iwduv0tpQv_gwE5r8qYyVw" },
+            { title: "Home Alone", exclusive: false, watchLink: "https://drive.google.com/file/d/1A_nTgPKWRyT1eTcZ9BoPxYTQyG6d_ZEE/view" },
+            { title: "Hotel Transylvania", exclusive: false, watchLink: "https://drive.google.com/file/d/0B-THZ1LLnEP2dTlrcUF2MTkycm8/view?resourcekey=0-l0spS2CjzKBwh-3HrYA6ZA" },
+            { title: "Karate Kid", exclusive: true, watchLink: "https://docs.google.com/file/d/0BzLWluNZlHyzX2RlclhZQ0U2V1k/view?resourcekey=0-FwUylbbeRdfJO2rxKa8F_Q" },
+            { title: "WALL-E", exclusive: false, watchLink: "https://drive.google.com/file/d/0B9konOTuvSYRQTl2Nmp6NkpjSG8/view?resourcekey=0-gT34eT_Bn7WLDxwX3U41fw" },
+            { title: "Kung Fu Panda 2", exclusive: false, watchLink: "https://drive.google.com/file/d/0B9konOTuvSYReXF0amROVHpocms/view?resourcekey=0-Xrj1WCN4bkWk6XuSuQSB8Q" },
+            { title: "Captain Underpants", exclusive: false, watchLink: "https://drive.google.com/file/d/12KFF1gwSSMWfsmQfAojeVwXOL5IEy-U0/view" },
+            { title: "Ice Age 4", exclusive: true, watchLink: "https://drive.google.com/file/d/1K2xnvYazLery61x03FrrOAbSSV8CBLGF/view" },
+            { title: "Ice Age 3", exclusive: true, watchLink: "https://drive.google.com/file/d/1mZ5mQ2AbA7Ux_m7dIYxERcKAx-UgrQBW/view" },
+            { title: "Pokemon The Movie", exclusive: false, watchLink: "https://docs.google.com/file/d/0B2dfiPfmY_hcVU8yTTVINjIwZmM/view?resourcekey=0-HdH63UWZkT5wt6ALvBoeCw" },
+            { title: "Infinity War", exclusive: false, watchLink: "https://drive.google.com/file/d/1ElFCVH6Q3-ebBdRPkiePBBjQgSm_ufJr/view" },
+            { title: "Terminator 3", exclusive: false, watchLink: "https://drive.google.com/file/d/0B3Ofxlf0CWbgV3VOSzdCX3NkR2M/view?resourcekey=0-CkbW9YXANAMh4MgImEHhig" },
+            { title: "Black Panther 1", exclusive: false, watchLink: "https://drive.google.com/file/d/1fGvajmEO8RarIucX9KCTG_Q6NDy2-gaa/view" },
+            { title: "Batman vs Superman", exclusive: false, watchLink: "https://drive.google.com/file/d/0B8l-1IBp9hVsd0hzcGt1eE13SDQ/view?resourcekey=0-e98SP81x-HB-vAHeI6YaGg" },
+            { title: "Plankton The Movie", exclusive: false, watchLink: "https://photos.google.com/share/AF1QipMpyTAG3aUxX2wQJICfOInCGjSGQcvRuJBPPwEEGo_wOaXVDnx0dQ2J36kYfz5sXA/photo/AF1QipNJyFDyyD7aqpcLx15BcZs7Nl3_1_SolpUONeBN?key=eUFFa1Y5S3ZqRDlsSWpUbzBTV0Y1aEJqbmVtWDdB" },
+            { title: "Halloween 1978", exclusive: false, watchLink: "https://drive.google.com/file/d/1SHoqJ8zp_ZBxSdk83KKDZ9LTxiSMvMm7/view?usp=drive_link" },
+            { title: "Deadpool & Wolverine", exclusive: false, watchLink: "https://drive.google.com/file/d/1yz6RAD9K34FsZy5OxcEJ5up0V1t8xN7i/view?usp=drive_link" },
+            { title: "Venom The Last Dance", exclusive: false, watchLink: "https://drive.google.com/file/d/1rrllK5I9Enht_Do1wO-18F8tJSWvRODb/view?usp=sharing" },
+
+            // New Movies
+            { title: "IT Chapter 2", exclusive: false, watchLink: "https://drive.google.com/file/d/1vLFTFzlvu9TJXbcL40gnag9Xart3pKQI/view?usp=drive_link" },
+            { title: "IT 2017", exclusive: false, watchLink: "https://drive.google.com/file/d/1BhQDbp8lXDwS-Q-pq4axufeZI-5TklpR/view?usp=drive_link" },
+            { title: "Taylor Swift: Eras Tour", exclusive: false, watchLink: "https://drive.google.com/file/d/1P5ifQa2abiquJOkOFe8jGhz73-Hu3ANv/view?usp=drive_link" },
+            { title: "Despicable Me 4", exclusive: false, watchLink: "https://drive.google.com/file/d/1siki1wYP3LpfjFpUT8Z9lJuJzl7MdBhX/view?usp=drive_link" },
+            { title: "Avengers Age Of Ultron", exclusive: false, watchLink: "https://drive.google.com/file/d/1kGvcnNTaFbsQY4ndeJT4CWtYkKHaTfGQ/view?usp=drive_link" },
+            { title: "Cars 2", exclusive: false, watchLink: "https://drive.google.com/file/d/1TKx-RUpz44aUVku1n-BJnJXXtjPIPOgV/view?usp=drive_link" },
+            { title: "⭐ MUST WATCH Diddy's Monster Fall", exclusive: false, watchLink: "https://drive.google.com/file/d/1ptJdU8If1DhaevNXIVnvy8Ugx5jX9CFy/view?usp=drive_link" },
+            { title: "Doctor Strange Mutiverse Of Madness", exclusive: false, watchLink: "https://drive.google.com/file/d/1HC1FKq4RSF40cH9amVm4VkIbjohLoOiP/view?usp=drive_link" },
+            { title: "Doctor Strange", exclusive: false, watchLink: "https://drive.google.com/file/d/11PAFLA_D94t0ZbSqcy-ggyl2DU7g0Ay2/view?usp=drive_link" },
+            { title: "4batz's U Made Me A St4r", exclusive: true, watchLink: "https://www.dropbox.com/scl/fi/2few9lkwi4lfs3qbz409s/Unlocked-Myo-Movies-4batz-s-U-Made-Me-A-St4r.mp4?rlkey=8rnud9f9q4atenkivaekf3hps&st=04nv92sq&dl=0" },
+            { title: "Sonic Prime", exclusive: true, watchLink: "https://drive.google.com/drive/folders/1q_NeRaY-fU59j9eiZQMs5bu-uFDb7oK9?usp=drive_link" },
+            { title: "Phineas And Ferb", exclusive: false, watchLink: "https://drive.google.com/drive/folders/15O2LLhprQNEUGA73u-jdNp3kL8UAHZUB" },
+        ];
+
+        const movieContainer = document.querySelector('.movie-container');
+        const searchInput = document.getElementById('search');
+        const loadingScreen = document.getElementById('loading');
+
+        function displayMovies(filter = '') {
+            movieContainer.innerHTML = '';
+            movies.forEach(movie => {
+                if (filter === 'exclusive' && !movie.exclusive) {
+                    return;
+                }
+                const movieDiv = document.createElement('div');
+                movieDiv.classList.add('movie');
+                movieDiv.innerHTML = `
+                    <h2>${movie.title}${movie.exclusive ? ' (In Site Exclusive)' : ''}</h2>
+                    <button onclick="openLink('${movie.watchLink}')">Watch</button>
+                `;
+                movieContainer.appendChild(movieDiv);
+            });
+        }
+
+        function filterMovies(type) {
+            displayMovies(type);
+        }
+
+        function openLink(url) {
+            loadingScreen.style.display = 'flex';
+            setTimeout(() => {
+                window.open(url, '_blank'); // Open in new tab
+                loadingScreen.style.display = 'none';
+            }, 1000);
+        }
+
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredMovies = movies.filter(movie => movie.title.toLowerCase().includes(searchTerm));
+            movieContainer.innerHTML = '';
+            filteredMovies.forEach(movie => {
+                const movieDiv = document.createElement('div');
+                movieDiv.classList.add('movie');
+                movieDiv.innerHTML = `
+                    <h2>${movie.title}${movie.exclusive ? ' (In Site Exclusive)' : ''}</h2>
+                    <button onclick="openLink('${movie.watchLink}')">Watch</button>
+                `;
+                movieContainer.appendChild(movieDiv);
+            });
+        });
+
+        // Initial display of all movies
+        displayMovies();
+    </script>
+</body>
+</html>
